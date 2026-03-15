@@ -1,5 +1,4 @@
-package com.engine;
-
+package com.engine.Tasks;
 
 class LongTask implements Task {
 

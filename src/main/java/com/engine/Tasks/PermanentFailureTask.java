@@ -1,5 +1,4 @@
-package com.engine;
-
+package com.engine.Tasks;
 
 public class PermanentFailureTask implements Task {
     private final int id;
