@@ -20,7 +20,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
                 <configuration>
-                    <mainClass>SpiderEngine</mainClass>
+                    <mainClass>com.engine.SpiderEngine</mainClass>
                 </configuration>
             </plugin>
         </plugins>

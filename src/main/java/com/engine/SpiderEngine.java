@@ -1,5 +1,8 @@
 package com.engine;
 
+import com.engine.Tasks.FlakyTask;
+import com.engine.Tasks.PermanentFailureTask;
+import com.engine.Tasks.SuccessTask;
 
 public class SpiderEngine {
 
@@ -24,11 +27,11 @@ public class SpiderEngine {
             pool.submit(new FlakyTask(i));
         }
 
-        /*// DLQ
+        
         for (int i = 1; i <= 3; i++) {
             pool.submit(new PermanentFailureTask(i));
         }
-        //LT
+        /*//LT
          for (int i = 1; i <= 8; i++) {
             pool.submit(new LongTask(i));
         }*/

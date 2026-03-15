@@ -1,10 +1,9 @@
-package com.engine;
+package com.engine.Tasks;
 
-
-class TaskWrapper implements Comparable<TaskWrapper>{
-    Task task;
-    int attempts;
-    long nextRunTime;
+public class TaskWrapper implements Comparable<TaskWrapper>{
+    public Task task;
+    public int attempts;
+    public long nextRunTime;
     public TaskWrapper(Task task, int i, long timeMillis) {
         this.task = task;
         this.attempts = i;

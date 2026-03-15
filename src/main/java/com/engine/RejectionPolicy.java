@@ -1,7 +1,7 @@
 package com.engine;
 
 
-enum RejectionPolicy {
+public enum RejectionPolicy {
     BLOCK,
     REJECT,
     CALLER_RUNS
