@@ -1,4 +1,4 @@
-package SpiderEngine;
+
 
 public class SuccessTask implements Task {
     private final int id;

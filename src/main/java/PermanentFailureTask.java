@@ -1,4 +1,4 @@
-package SpiderEngine;
+
 
 public class PermanentFailureTask implements Task {
     private final int id;

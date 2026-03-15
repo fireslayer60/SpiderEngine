@@ -1,4 +1,4 @@
-package SpiderEngine;
+
 
 class TaskWrapper implements Comparable<TaskWrapper>{
     Task task;

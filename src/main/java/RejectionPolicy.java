@@ -1,4 +1,4 @@
-package SpiderEngine;
+
 
 enum RejectionPolicy {
     BLOCK,
