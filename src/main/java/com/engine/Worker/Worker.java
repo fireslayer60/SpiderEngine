@@ -24,7 +24,7 @@ public class Worker implements Runnable {
                     case BLOCK: queue.wait(); break;
                     case REJECT: throw new RuntimeException("Queue full loool");
                     case CALLER_RUNS:
-                        try { taskWrapper.task.execute(); } 
+                        try { taskWrapper.executeTask(); } 
                         catch (Exception e) { e.printStackTrace(); }
                         return;
                 }
@@ -84,7 +84,7 @@ public class Worker implements Runnable {
 
             if (taskWrapper != null) {
                 try {
-                    taskWrapper.task.execute();
+                    taskWrapper.executeTask();;
                 } catch (Exception e) {
                     pool.handleFailure(taskWrapper, e);
                 }

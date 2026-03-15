@@ -46,11 +46,11 @@ public class SimpleThreadPool {
     }
 
     public void handleFailure(TaskWrapper taskWrapper, Exception e) {
-        taskWrapper.attempts++;
-        if (taskWrapper.attempts > maxRetries) {
+        taskWrapper.addAttempts(1);;
+        if (taskWrapper.getAttempts() > maxRetries) {
             sendToDLQ(taskWrapper, e);
         } else {
-            taskWrapper.nextRunTime = System.currentTimeMillis() + retryDelayMs;
+            taskWrapper.setRuntime(System.currentTimeMillis() + retryDelayMs);
             synchronized (delayLock) {
                 delayQueue.add(taskWrapper);
                 delayLock.notifyAll();
@@ -62,7 +62,7 @@ public class SimpleThreadPool {
         synchronized (deadLetterQueue) {
             deadLetterQueue.add(taskWrapper);
         }
-        System.out.println("Task moved to DLQ after " + taskWrapper.attempts + " attempts. Error: " + e.getMessage());
+        System.out.println("Task moved to DLQ after " + taskWrapper.getAttempts() + " attempts. Error: " + e.getMessage());
     }
 
     public void shutdown() {
@@ -80,16 +80,19 @@ public class SimpleThreadPool {
         for (Worker worker : workers) {
             LinkedList<TaskWrapper> q = worker.getQueue();
             synchronized (q) {
-                for (TaskWrapper tw : q) { pending.add(tw.task); }
+                for (TaskWrapper tw : q) { tw.addToQueue(pending); }
                 q.clear();
             }
         }
         synchronized (delayLock) {
+            for (TaskWrapper tw : delayQueue) { 
+                tw.addToQueue(pending);}
             delayQueue.clear();
             delayLock.notifyAll();
         }
         for (Thread t : workerThreads) { t.interrupt(); }
         return pending;
+
     }
 
     public boolean awaitTermination(long timeoutMillis) throws InterruptedException {
@@ -124,7 +127,7 @@ public class SimpleThreadPool {
                         while (delayQueue.isEmpty() && !isShutdown) delayLock.wait();
                         if (isShutdown) return;
                         wrapper = delayQueue.peek();
-                        long waitTime = wrapper.nextRunTime - System.currentTimeMillis();
+                        long waitTime = wrapper.getRuntime() - System.currentTimeMillis();
                         if (waitTime > 0) {
                             delayLock.wait(waitTime);
                             continue;
