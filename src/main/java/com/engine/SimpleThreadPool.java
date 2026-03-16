@@ -3,6 +3,7 @@ package com.engine;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -35,7 +36,7 @@ public class SimpleThreadPool {
         this.retryDelayMs = delay;
         this.workers = new Worker[numWorkers];
         this.workerThreads = new Thread[numWorkers];
-        this.eventListener = eventListener;
+        this.eventListener = Objects.requireNonNull(eventListener);
 
         for (int i = 0; i < numWorkers; i++) {
             workers[i] = new Worker(queueSize, i, this,eventListener);
