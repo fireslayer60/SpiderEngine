@@ -93,6 +93,7 @@ public class Worker implements Runnable {
                 try {
                     eventListener.onTaskStarted(Thread.currentThread().getName(), taskWrapper.getTask());
                     taskWrapper.executeTask();
+                    eventListener.onTaskCompleted(Thread.currentThread().getName(), taskWrapper.getTask());
                 } catch (Exception e) {
                     eventListener.onTaskFailed(Thread.currentThread().getName(), taskWrapper.getTask(), e);
                     pool.handleFailure(taskWrapper, e);
@@ -106,7 +107,7 @@ public class Worker implements Runnable {
                     return; 
                 }
             }
-            eventListener.onTaskCompleted(Thread.currentThread().getName(), taskWrapper.getTask());
+            
         }
         
         System.out.println(Thread.currentThread().getName() + " exiting");
