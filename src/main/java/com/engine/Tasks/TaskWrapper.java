@@ -33,5 +33,8 @@ public class TaskWrapper implements Comparable<TaskWrapper>{
     public long getRuntime(){
         return nextRunTime;
     }
+    public Task getTask(){
+        return task;
+    }
     
 }

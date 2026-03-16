@@ -3,6 +3,7 @@ package com.engine;
 import com.engine.Tasks.FlakyTask;
 import com.engine.Tasks.PermanentFailureTask;
 import com.engine.Tasks.SuccessTask;
+import com.engine.observability.listner.NoOpExecutorEventListener;
 
 public class SpiderEngine {
 
@@ -14,7 +15,7 @@ public class SpiderEngine {
                         5,
                         RejectionPolicy.BLOCK,
                         2,
-                        100
+                        100, new NoOpExecutorEventListener()
                 );
 
         // success

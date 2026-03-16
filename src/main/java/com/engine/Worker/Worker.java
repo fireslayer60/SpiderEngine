@@ -1,20 +1,25 @@
 package com.engine.Worker;
 
+import java.util.EventListener;
 import java.util.LinkedList;
 
 import com.engine.SimpleThreadPool;
 import com.engine.Tasks.TaskWrapper;
+import com.engine.observability.enums.WorkerState;
+import com.engine.observability.listner.ExecutorEventListener;
 
 public class Worker implements Runnable {
     private final LinkedList<TaskWrapper> queue = new LinkedList<>();
     private final int MAX_QUEUE_SIZE;
     private final int id;
     private final SimpleThreadPool pool;
+    private final ExecutorEventListener eventListener;
 
-    public Worker(int MAX_QUEUE_SIZE, int id, SimpleThreadPool pool) {
+    public Worker(int MAX_QUEUE_SIZE, int id, SimpleThreadPool pool, ExecutorEventListener eventListener) {
         this.MAX_QUEUE_SIZE = MAX_QUEUE_SIZE;
         this.id = id;
         this.pool = pool;
+        this.eventListener = eventListener;
     }
 
     public void enqueue(TaskWrapper taskWrapper) throws InterruptedException {
@@ -22,7 +27,7 @@ public class Worker implements Runnable {
             while (queue.size() >= MAX_QUEUE_SIZE) {
                 switch (pool.getRejectionPolicy()) {
                     case BLOCK: queue.wait(); break;
-                    case REJECT: throw new RuntimeException("Queue full loool");
+                    case REJECT: throw new RuntimeException("Queue full");
                     case CALLER_RUNS:
                         try { taskWrapper.executeTask(); } 
                         catch (Exception e) { e.printStackTrace(); }
@@ -62,6 +67,7 @@ public class Worker implements Runnable {
 
                 if (stolen != null) {
                     System.out.println(Thread.currentThread().getName() + " stole task from worker-" + i);
+                    eventListener.onTaskStolen(Thread.currentThread().getName(), "worker-"+i, stolen.getTask());
                     victim.queue.notifyAll();
                     return stolen;
                 }
@@ -73,6 +79,7 @@ public class Worker implements Runnable {
     @Override
     public void run() {
         System.out.println("Worker started: " + Thread.currentThread().getName());
+        eventListener.onWorkerStateChange(Thread.currentThread().getName(), WorkerState.RUNNING);
 
         while (!pool.isShutdown()) {
             
@@ -84,9 +91,12 @@ public class Worker implements Runnable {
 
             if (taskWrapper != null) {
                 try {
-                    taskWrapper.executeTask();;
+                    eventListener.onTaskStarted(Thread.currentThread().getName(), taskWrapper.getTask());
+                    taskWrapper.executeTask();
                 } catch (Exception e) {
+                    eventListener.onTaskFailed(Thread.currentThread().getName(), taskWrapper.getTask(), e);
                     pool.handleFailure(taskWrapper, e);
+                    continue;
                 }
             } else {
                 try { 
@@ -96,7 +106,9 @@ public class Worker implements Runnable {
                     return; 
                 }
             }
+            eventListener.onTaskCompleted(Thread.currentThread().getName(), taskWrapper.getTask());
         }
+        
         System.out.println(Thread.currentThread().getName() + " exiting");
     }
 }
