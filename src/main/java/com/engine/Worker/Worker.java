@@ -13,13 +13,16 @@ public class Worker implements Runnable {
     private final int MAX_QUEUE_SIZE;
     private final int id;
     private final SimpleThreadPool pool;
-    private final ExecutorEventListener eventListener;
+    private volatile ExecutorEventListener eventListener;
 
     public Worker(int MAX_QUEUE_SIZE, int id, SimpleThreadPool pool, ExecutorEventListener eventListener) {
         this.MAX_QUEUE_SIZE = MAX_QUEUE_SIZE;
         this.id = id;
         this.pool = pool;
         this.eventListener = eventListener;
+    }
+    public void setEventListener(ExecutorEventListener listener) {
+        this.eventListener = listener;
     }
 
     public void enqueue(TaskWrapper taskWrapper) throws InterruptedException {
