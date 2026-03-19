@@ -3,11 +3,23 @@ package com.engine;
 import com.engine.Tasks.FlakyTask;
 import com.engine.Tasks.PermanentFailureTask;
 import com.engine.Tasks.SuccessTask;
+import com.engine.observability.listner.EventBusExecutorListener;
+import com.engine.observability.listner.ExecutorEventBus;
 import com.engine.observability.listner.NoOpExecutorEventListener;
 
 public class SpiderEngine {
 
     public static void main(String[] args) throws Exception {
+        ExecutorEventBus eventBus = new ExecutorEventBus();
+        eventBus.subscribe(event -> {
+            System.out.printf(
+                "%s | worker=%s | task=%s | meta=%s%n",
+                event.getType(),
+                event.getWorkerId(),
+                event.getTaskId(),
+                event.getMetadata()
+            );
+        });
 
         SimpleThreadPool pool =
                 new SimpleThreadPool(
@@ -17,6 +29,7 @@ public class SpiderEngine {
                         2,
                         100, new NoOpExecutorEventListener()
                 );
+        pool.setEventListener(new EventBusExecutorListener(eventBus));
 
         // success
         for (int i = 1; i <= 3; i++) {

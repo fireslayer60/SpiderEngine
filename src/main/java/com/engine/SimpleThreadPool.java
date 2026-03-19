@@ -36,7 +36,9 @@ public class SimpleThreadPool {
         this.retryDelayMs = delay;
         this.workers = new Worker[numWorkers];
         this.workerThreads = new Thread[numWorkers];
-        this.eventListener = Objects.requireNonNull(eventListener);
+        this.eventListener = eventListener != null 
+        ? eventListener 
+        : new NoOpExecutorEventListener();
 
         for (int i = 0; i < numWorkers; i++) {
             workers[i] = new Worker(queueSize, i, this,eventListener);
@@ -46,6 +48,16 @@ public class SimpleThreadPool {
         new Thread(new RetryScheduler(), "retry-scheduler").start();
         System.out.println("ThreadPool initialized");
     }
+    public void setEventListener(ExecutorEventListener listener) {
+            this.eventListener = listener != null 
+                ? listener 
+                : new NoOpExecutorEventListener();
+
+            // 🔥 propagate to workers
+            for (Worker worker : workers) {
+                worker.setEventListener(this.eventListener);
+            }
+        }
     
 
     public void submit(Task task) throws InterruptedException {
