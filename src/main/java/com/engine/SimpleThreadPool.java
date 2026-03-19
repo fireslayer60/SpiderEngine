@@ -1,12 +1,18 @@
 package com.engine;
 
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.engine.Tasks.Task;
 import com.engine.Tasks.TaskWrapper;
 import com.engine.Worker.Worker;
+import com.engine.observability.listner.ExecutorEventListener;
+import com.engine.observability.listner.NoOpExecutorEventListener;
+import com.engine.observability.stats.ExecutorStats;
 
 public class SimpleThreadPool {
     private final Worker[] workers;
@@ -22,31 +28,35 @@ public class SimpleThreadPool {
     private final PriorityQueue<TaskWrapper> delayQueue = new PriorityQueue<>();
     private final Object delayLock = new Object();
     private final LinkedList<TaskWrapper> deadLetterQueue = new LinkedList<>();
+    private ExecutorEventListener eventListener = new NoOpExecutorEventListener();
 
-    public SimpleThreadPool(int numWorkers, int queueSize, RejectionPolicy policy, int retries, long delay) {
+    public SimpleThreadPool(int numWorkers, int queueSize, RejectionPolicy policy, int retries, long delay, ExecutorEventListener eventListener) {
         this.rejectionPolicy = policy;
         this.maxRetries = retries;
         this.retryDelayMs = delay;
         this.workers = new Worker[numWorkers];
         this.workerThreads = new Thread[numWorkers];
+        this.eventListener = Objects.requireNonNull(eventListener);
 
         for (int i = 0; i < numWorkers; i++) {
-            workers[i] = new Worker(queueSize, i, this);
+            workers[i] = new Worker(queueSize, i, this,eventListener);
             workerThreads[i] = new Thread(workers[i], "worker-" + i);
             workerThreads[i].start();
         }
         new Thread(new RetryScheduler(), "retry-scheduler").start();
         System.out.println("ThreadPool initialized");
     }
+    
 
     public void submit(Task task) throws InterruptedException {
         if (isShutdown) throw new IllegalStateException("ThreadPool is shutdown");
         TaskWrapper wrapper = new TaskWrapper(task, 0, System.currentTimeMillis());
         getNextWorker().enqueue(wrapper);
+        eventListener.onTaskSubmitted(task);
     }
 
     public void handleFailure(TaskWrapper taskWrapper, Exception e) {
-        taskWrapper.addAttempts(1);;
+        taskWrapper.addAttempts(1);
         if (taskWrapper.getAttempts() > maxRetries) {
             sendToDLQ(taskWrapper, e);
         } else {
@@ -62,6 +72,7 @@ public class SimpleThreadPool {
         synchronized (deadLetterQueue) {
             deadLetterQueue.add(taskWrapper);
         }
+        eventListener.onTaskMovedToDLQ(taskWrapper.getTask());
         System.out.println("Task moved to DLQ after " + taskWrapper.getAttempts() + " attempts. Error: " + e.getMessage());
     }
 
@@ -120,9 +131,12 @@ public class SimpleThreadPool {
     private class RetryScheduler implements Runnable {
         @Override
         public void run() {
+            
             while (!isShutdown) {
                 try {
+                    
                     TaskWrapper wrapper;
+                    
                     synchronized (delayLock) {
                         while (delayQueue.isEmpty() && !isShutdown) delayLock.wait();
                         if (isShutdown) return;
@@ -134,9 +148,11 @@ public class SimpleThreadPool {
                         }
                         delayQueue.poll();
                     }
+                    eventListener.onTaskRetryScheduled(wrapper.getTask(), wrapper.getAttempts());
                     getNextWorker().enqueue(wrapper);
                 } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
             }
         }
     }
+
 }
