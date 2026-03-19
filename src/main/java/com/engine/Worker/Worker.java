@@ -28,10 +28,6 @@ public class Worker implements Runnable {
                 switch (pool.getRejectionPolicy()) {
                     case BLOCK: queue.wait(); break;
                     case REJECT: throw new RuntimeException("Queue full");
-                    case CALLER_RUNS:
-                        try { taskWrapper.executeTask(); } 
-                        catch (Exception e) { e.printStackTrace(); }
-                        return;
                 }
             }
             queue.addFirst(taskWrapper);
@@ -72,19 +68,8 @@ public class Worker implements Runnable {
                     victim.queue.notifyAll();
                     return stolen;
                 }
-    @Override
-    public void run() {
-        System.out.println("Worker started: " + Thread.currentThread().getName());
-        eventListener.onWorkerStateChange(Thread.currentThread().getName(), WorkerState.RUNNING);
 
-        while (true) {
-            if (pool.isShutdown()) {
-                eventListener.onWorkerStateChange(Thread.currentThread().getName(), WorkerState.SHUTTING_DOWN);
-                break;
-            }
-
-            if (taskWrapper != null) {
-            }
+}
         }
         return null;
     }
@@ -100,6 +85,7 @@ public class Worker implements Runnable {
 
             if (taskWrapper == null) {
                 taskWrapper = steal();
+                eventListener.onWorkerStateChange(Thread.currentThread().getName(), WorkerState.RUNNING);
             }
 
             if (taskWrapper != null) {
@@ -109,6 +95,7 @@ public class Worker implements Runnable {
                     eventListener.onTaskCompleted(Thread.currentThread().getName(), taskWrapper.getTask());
                 } catch (Exception e) {
                     eventListener.onTaskFailed(Thread.currentThread().getName(), taskWrapper.getTask(), e);
+                    eventListener.onWorkerStateChange(Thread.currentThread().getName(), WorkerState.IDLE);
                     pool.handleFailure(taskWrapper, e);
                     continue;
                 }
@@ -122,7 +109,7 @@ public class Worker implements Runnable {
             }
             
         }
-        
+        eventListener.onWorkerStateChange(Thread.currentThread().getName(), WorkerState.SHUTTING_DOWN);
         System.out.println(Thread.currentThread().getName() + " exiting");
     }
 }
