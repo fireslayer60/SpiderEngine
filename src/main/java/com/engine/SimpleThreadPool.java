@@ -41,7 +41,7 @@ public class SimpleThreadPool {
         : new NoOpExecutorEventListener();
 
         for (int i = 0; i < numWorkers; i++) {
-            workers[i] = new Worker(queueSize, i, this,eventListener);
+            workers[i] = new Worker(queueSize, i, this,this.eventListener);
             workerThreads[i] = new Thread(workers[i], "worker-" + i);
             workerThreads[i].start();
         }

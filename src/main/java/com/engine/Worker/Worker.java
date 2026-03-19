@@ -13,7 +13,7 @@ public class Worker implements Runnable {
     private final int MAX_QUEUE_SIZE;
     private final int id;
     private final SimpleThreadPool pool;
-    private ExecutorEventListener eventListener;
+    private volatile ExecutorEventListener eventListener;
 
     public Worker(int MAX_QUEUE_SIZE, int id, SimpleThreadPool pool, ExecutorEventListener eventListener) {
         this.MAX_QUEUE_SIZE = MAX_QUEUE_SIZE;
