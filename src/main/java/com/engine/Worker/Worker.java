@@ -66,11 +66,24 @@ public class Worker implements Runnable {
                 TaskWrapper stolen = victim.queue.pollLast();
 
                 if (stolen != null) {
+                    eventListener.onWorkerStateChange(Thread.currentThread().getName(), WorkerState.STEALING);
                     System.out.println(Thread.currentThread().getName() + " stole task from worker-" + i);
                     eventListener.onTaskStolen(Thread.currentThread().getName(), "worker-"+i, stolen.getTask());
                     victim.queue.notifyAll();
                     return stolen;
                 }
+    @Override
+    public void run() {
+        System.out.println("Worker started: " + Thread.currentThread().getName());
+        eventListener.onWorkerStateChange(Thread.currentThread().getName(), WorkerState.RUNNING);
+
+        while (true) {
+            if (pool.isShutdown()) {
+                eventListener.onWorkerStateChange(Thread.currentThread().getName(), WorkerState.SHUTTING_DOWN);
+                break;
+            }
+
+            if (taskWrapper != null) {
             }
         }
         return null;
