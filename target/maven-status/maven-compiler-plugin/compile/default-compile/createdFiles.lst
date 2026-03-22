@@ -11,6 +11,7 @@ com\engine\observability\listner\EventBusExecutorListener.class
 com\engine\Tasks\PermanentFailureTask.class
 com\engine\Tasks\TaskWrapper.class
 com\engine\Tasks\Task.class
+com\engine\observability\Metrics\MetricsSubscriber$1.class
 com\engine\observability\listner\ExecutorEventBus.class
 com\engine\observability\listner\NoOpExecutorEventListener.class
 com\engine\Tasks\SuccessTask.class
@@ -19,3 +20,4 @@ com\engine\observability\enums\EventType.class
 com\engine\Tasks\LongTask.class
 com\engine\observability\listner\ExecutorEventSubscriber.class
 com\engine\observability\enums\WorkerState.class
+com\engine\observability\Metrics\MetricsSubscriber.class

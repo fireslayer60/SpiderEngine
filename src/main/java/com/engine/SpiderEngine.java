@@ -3,23 +3,22 @@ package com.engine;
 import com.engine.Tasks.FlakyTask;
 import com.engine.Tasks.PermanentFailureTask;
 import com.engine.Tasks.SuccessTask;
+import com.engine.observability.Metrics.MetricsSubscriber;
 import com.engine.observability.listner.EventBusExecutorListener;
 import com.engine.observability.listner.ExecutorEventBus;
 import com.engine.observability.listner.NoOpExecutorEventListener;
+
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 public class SpiderEngine {
 
     public static void main(String[] args) throws Exception {
         ExecutorEventBus eventBus = new ExecutorEventBus();
-        eventBus.subscribe(event -> {
-            System.out.printf(
-                "%s | worker=%s | task=%s | meta=%s%n",
-                event.getType(),
-                event.getWorkerId(),
-                event.getTaskId(),
-                event.getMetadata()
-            );
-        });
+        
+        MeterRegistry registry = new SimpleMeterRegistry();
+        MetricsSubscriber metricsSubscriber = new MetricsSubscriber(registry);
+        eventBus.subscribe(metricsSubscriber);
 
         SimpleThreadPool pool =
                 new SimpleThreadPool(
@@ -51,6 +50,11 @@ public class SpiderEngine {
         }*/
 
         Thread.sleep(2000);
+        registry.getMeters().forEach(meter -> {
+            System.out.println(
+                meter.getId().getName() + " = " + meter.measure()
+            );
+        });
 
         System.out.println("\n--- exiting gracefully ---");
 
