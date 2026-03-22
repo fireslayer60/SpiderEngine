@@ -24,6 +24,8 @@ public class MetricsSubscriber implements ExecutorEventSubscriber {
     // Gauges (stateful)
     private final AtomicInteger activeWorkers = new AtomicInteger(0);
     private final AtomicInteger idleWorkers = new AtomicInteger(0);
+    private static final String STATE_RUNNING = "RUNNING";
+    private static final String STATE_IDLE = "IDLE";
     private final Map<String, String> workerStates = new ConcurrentHashMap<>();
 
     public MetricsSubscriber(MeterRegistry registry) {
@@ -83,8 +85,8 @@ public class MetricsSubscriber implements ExecutorEventSubscriber {
         int idle = 0;
 
         for (String state : workerStates.values()) {
-            if (state.equals("RUNNING")) active++;
-            else if (state.equals("IDLE")) idle++;
+            if (state.equals(STATE_RUNNING)) active++;
+            else if (state.equals(STATE_IDLE)) idle++;
         }
 
         activeWorkers.set(active);
